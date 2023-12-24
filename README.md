@@ -71,10 +71,10 @@ sudo python3 Wifi_Dos.py
 The currently supported functionalities are:
 
 * Displaying all the WiFi networks that the adapter captures.
-* Displaying the devices by its MAC addresses that is connected to a specific network of your choice.
+* Displaying the devices by its MAC addresses that are connected to a specific network of your choice.
 * Attacking the network by a deauthentication attack.
-* Ability to do the attack on specific devices by selecting them, and also for all the devices.
-* Selecting what frequency/bands that the adapter will capture.
+* The ability to do the attack on specific devices by selecting them.
+* Selecting what frequency/bands the adapter will capture.
 * Selecting which adapter do you want to use (if you have more than one connected).
 <br><br>
 
