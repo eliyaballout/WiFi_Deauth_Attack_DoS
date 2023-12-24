@@ -88,7 +88,7 @@ The currently supported functionalities are:
 
 
 
-## Some screenshots from our app
+## Some screenshots from the program
 
 ![main](https://github.com/eliyaballout/WiFi_DoS/assets/94072460/e4bc2b79-557c-4b97-9032-fe63f1243e8b) <br><br>
 
