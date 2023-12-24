@@ -56,7 +56,7 @@ cd WiFi_DoS
 
 run the app:
 ```
-python3 Wifi_Dos.py
+sudo python3 Wifi_Dos.py
 ```
 <br>
 
@@ -89,3 +89,9 @@ The currently supported functionalities are:
 
 
 ## Some screenshots from our app
+
+![main](https://github.com/eliyaballout/WiFi_DoS/assets/94072460/e4bc2b79-557c-4b97-9032-fe63f1243e8b) <br><br>
+
+![networks](https://github.com/eliyaballout/WiFi_DoS/assets/94072460/da4b6028-8ee7-43de-8a06-0d9a4db8c978) <br><br>
+
+![clients](https://github.com/eliyaballout/WiFi_DoS/assets/94072460/ca23ecd0-6b26-4df3-b89e-0dbb864492f1) <br>
