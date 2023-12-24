@@ -29,7 +29,7 @@ This python code demonstrate a deauthentication attack on client devices that ar
 
 **Before installing and start using the program, you will have to know some of the requirements that it needs:**
 
-1. **Kali Linux:** The most used OS for hacking and penetration testing is Kali linux. So you need to have kali linux, or any linux distro you want as long as `aircrack-ng` tool is installed on it, installed in your computer using VirtualBox or VMware. <br>
+1. **Kali Linux:** The most used OS for hacking and penetration testing is Kali linux. So you need to have kali linux, installed in your computer using VirtualBox or VMware. Or any linux distro you want as long as `aircrack-ng` tool is installed on it<br>
 The advantage of Kali that there are many many tools comes pre-installed. but as I said the main thing is to be `aircrack-ng` installed.
 
 
