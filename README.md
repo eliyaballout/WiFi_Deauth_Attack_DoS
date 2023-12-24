@@ -54,7 +54,7 @@ git clone https://github.com/eliyaballout/WiFi_DoS
 cd WiFi_DoS
 ```
 
-run the app:
+This program needs a root privileges, so run the program with sudo:
 ```
 sudo python3 Wifi_Dos.py
 ```
