@@ -56,7 +56,7 @@ cd WiFi_Deauth_Attack_DoS
 
 This program needs a root privileges, so run the program with sudo:
 ```
-sudo python3 Wifi_Dos.py
+sudo python3 deauth_attack.py
 ```
 <br>
 
