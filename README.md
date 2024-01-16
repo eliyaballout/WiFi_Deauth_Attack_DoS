@@ -1,10 +1,10 @@
-# ***Welcome to WiFi DoS***
+# ***Welcome to WiFi Deauthentication Attack***
 
 
 
 ## Introduction
 
-Welcome to WiFi DoS program, this program is written in python. <br>
+Welcome to WiFi deauthentication attack program, this program is written in python. <br>
 This python code demonstrate a deauthentication attack on client devices that are connected to a wireless network. So instead of doing it manually and type each command separately and to make it more interesting and a lot simpler, I've made a script that automates this process and speed things up. <br><br>
 
 
@@ -50,8 +50,8 @@ So i will help you to pick up your adapter. There are many kinds of frequencies 
 **This program will only work on linux, not Windows.** <br>
 To download the program for all Linux distributions, you have to clone the repo from GitHub:
 ```
-git clone https://github.com/eliyaballout/WiFi_DoS
-cd WiFi_DoS
+git clone https://github.com/eliyaballout/WiFi_Deauth_Attack_DoS
+cd WiFi_Deauth_Attack_DoS
 ```
 
 This program needs a root privileges, so run the program with sudo:
